@@ -29,16 +29,35 @@ function App() {
     return null;
   };
 
-  // ✅ Updated Wi-Fi decode using html5-qrcode
+  // ✅ Fixed Wi-Fi decode using html5-qrcode instance
   const decodeWifiQR = async () => {
     if (!wifiFile) return;
+
     try {
-      const fileUrl = URL.createObjectURL(wifiFile);
-      const result = await Html5Qrcode.scanFile(fileUrl, true); // returns decoded text
-      const info = parseWiFiQR(result);
+      // create a temporary div ID for Html5Qrcode
+      const tempId = "html5-qrcode-temp";
+      let tempDiv = document.getElementById(tempId);
+      if (!tempDiv) {
+        tempDiv = document.createElement("div");
+        tempDiv.id = tempId;
+        tempDiv.style.display = "none"; // hide the div
+        document.body.appendChild(tempDiv);
+      }
+
+      const html5QrCode = new Html5Qrcode(tempId);
+
+      const result = await html5QrCode.scanFile(wifiFile, true); 
+      // result can be string or array of objects
+      const decodedText = Array.isArray(result)
+        ? result[0].decodedText || result[0]
+        : result;
+
+      const info = parseWiFiQR(decodedText);
       if (info) setWifiInfo(info);
       else alert("Not a valid Wi-Fi QR code");
-      URL.revokeObjectURL(fileUrl);
+
+      await html5QrCode.clear(); // clean up
+      tempDiv.remove();
     } catch (err) {
       console.error(err);
       alert("Could not detect QR code in the image");

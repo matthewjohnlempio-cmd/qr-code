@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { QRCode } from "react-qrcode-logo";
 import { Download, Link as LinkIcon } from "lucide-react";
-import QrScanner from "qr-scanner";
+import { Html5Qrcode } from "html5-qrcode"; // ✅ updated
 import "./App.css";
 
 function App() {
@@ -29,12 +29,13 @@ function App() {
     return null;
   };
 
+  // ✅ Updated Wi-Fi decode using html5-qrcode
   const decodeWifiQR = async () => {
     if (!wifiFile) return;
     try {
       const fileUrl = URL.createObjectURL(wifiFile);
-      const result = await QrScanner.scanImage(fileUrl, { returnDetailedScanResult: true });
-      const info = parseWiFiQR(result.data);
+      const result = await Html5Qrcode.scanFile(fileUrl, true); // returns decoded text
+      const info = parseWiFiQR(result);
       if (info) setWifiInfo(info);
       else alert("Not a valid Wi-Fi QR code");
       URL.revokeObjectURL(fileUrl);
@@ -53,7 +54,6 @@ function App() {
     }, 300);
   };
 
-  // Force re-render QR code as SVG when switching downloadFormat
   useEffect(() => {
     if (downloadFormat === "svg" && showQR) {
       setShowQR(false);
@@ -194,9 +194,7 @@ function App() {
                     accept="image/*"
                     onChange={(e) => setWifiFile(e.target.files[0])}
                   />
-                  <span>
-                    {wifiFile ? wifiFile.name : "Choose QR image"}
-                  </span>
+                  <span>{wifiFile ? wifiFile.name : "Choose QR image"}</span>
                 </label>
 
                 <button
